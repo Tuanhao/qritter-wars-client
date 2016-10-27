@@ -55,7 +55,7 @@ let getYourHealth = (game) => {
                 reject(error)
             } else {
                 let health = JSON.parse(body).health
-                if (game.player1 === playerId) {
+                if (game.player2 === playerId) {
                     myHealth = health
                 } else {
                     yourHealth = health
@@ -101,11 +101,11 @@ let performMove = (gameId) => {
 
 let moveDecision = () => {
   if (yourHealth <= 15) {
-    return {action:"attack"}
-  } else if (myHealth <= 30) {
-    return {action:"heal"}
-  }else {
-    return {action:"attack"}
+    return { action: "attack" }
+  } else if (myHealth <= 27) {
+    return { action: "heal" }
+  } else {
+    return { action: "attack" }
   }
 }
 
@@ -123,20 +123,13 @@ socket.on('success', (data) => {
 })
 
 socket.on('start game', (game) => {
-    console.log('Game started:')
-    let gameId = game.id
-    getGame(game.id)
-        .then((gameData) => {
-            if(gameData.current === playerId) {
-                console.log('Our turn')
-                preformMove(gameId)
-            } else {
-                console.log('Their turn')
-            }
-        })
-        .catch((error) => {
-            console.log('Start game error', error)
-        })
+    console.log('===== Game started: =====')
+    if (game.current === playerId) {
+        console.log('== Our turn ==')
+        preformMove(game.id)
+    } else {
+        console.log('== Their turn ==')
+    }
 })
 
 socket.on('move played', (move) => {
@@ -148,8 +141,9 @@ socket.on('move played', (move) => {
 
 socket.on('game over', (gameData) => {
     if (gameData.game.winner === playerId) {
-        console.log('WE WON');
+        console.log('==== WE WON ====')
     } else {
-        console.log('WE LOST');
+        console.log('==== WE LOST ====')
     }
+    console.log(gameData)
 })
