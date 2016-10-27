@@ -8,6 +8,7 @@ let playerId
 let myHealth;
 let yourHealth;
 const socketArguments = `apiId=${config.apiId}&apiSecret=${config.apiSecret}`
+const apiKey = new Buffer(`${config.apiId}:${config.apiSecret}`).toString('base64')
 const socket = io.connect(`http://${config.host}:${config.socketPort}`, { query: socketArguments })
 
 let createOptions = (endpoint, method, body) => {
@@ -25,42 +26,43 @@ let createOptions = (endpoint, method, body) => {
   return options
 }
 
-let getHealth = (gameId) => {
+let getMyHealth = (game) => {
     return new Promise((resolve, reject) => {
-        let gameObject;
-        getGame(gameId)
-            .then((game) => {
-                gameObject = game;
-                let options = createOptions(`players/${game.player1}`, 'GET')
-                request.get(options, (error, res, body) => {
-                    if (error || res.statusCode !== 200) {
-                        console.error('Error getting player', error || res.body)
-                        reject(error)
-                    } else {
-                        if (game.player1 === playerId) {
-                            myHealth = res.health
-                        } else {
-                            yourHealth = res.health
-                        }
-                    }
-                })
-                options = createOptions(`players/${game.player2}`, 'GET')
-                request.get(options, (error, res, body) => {
-                    if (error || res.statusCode !== 200) {
-                        console.error('Error getting player', error || res.body)
-                        reject(error)
-                    } else {
-                        if (game.player1 === playerId) {
-                            myHealth = res.health
-                        } else {
-                            yourHealth = res.health
-                        }
-                    }
-                })
-            })
-            .catch((error) => {
-                console.log('Cant get game');
-            })
+        let options = createOptions(`players/${game.player1}`, 'GET')
+        request.get(options, (error, res, body) => {
+            if (error || res.statusCode !== 200) {
+                console.error('Error getting player', error || res.body)
+                reject(error)
+            } else {
+                let health = JSON.parse(body).health
+                if (game.player1 === playerId) {
+                    myHealth = health
+                } else {
+                    yourHealth = health
+                }
+                resolve(game)
+            }
+        })
+    })
+}
+
+let getYourHealth = (game) => {
+    return new Promise((resolve, reject) => {
+        let options = createOptions(`players/${game.player2}`, 'GET')
+        request.get(options, (error, res, body) => {
+            if (error || res.statusCode !== 200) {
+                console.error('Error getting player', error || res.body)
+                reject(error)
+            } else {
+                let health = JSON.parse(body).health
+                if (game.player1 === playerId) {
+                    myHealth = health
+                } else {
+                    yourHealth = health
+                }
+                resolve(game)
+            }
+        })
     })
 }
 
@@ -79,13 +81,13 @@ let getGame = (gameId) => {
 }
 
 let performMove = (gameId) => {
-    let body = { action: 'attack' };
-    getHealth(gameId)
+    getGame(gameId)
+        .then((game) => getMyHealth(game))
+        .then((game) => getYourHealth(game))
         .then((game) => {
-            console.log(game);
             console.log('myHealth', myHealth)
             console.log('yourHealth', yourHealth)
-
+            let body = { action: 'attack' }
           let options = createOptions("moves", "POST", body)
           request.post(options, (error, res, body) => {
             if (error || res.statusCode !== 200) {
@@ -107,7 +109,7 @@ socket.on('invalid', (error) => {
 
 socket.on('success', (data) => {
     playerId = data.id
-    console.log(playerId)
+    console.log('My player Id: ', playerId)
 })
 
 socket.on('start game', (game) => {
