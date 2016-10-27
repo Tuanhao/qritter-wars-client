@@ -79,12 +79,12 @@ let getGame = (gameId) => {
 }
 
 let performMove = (gameId) => {
-    let body = { action: 'attack' };
     getHealth(gameId)
         .then((game) => {
             console.log(game);
             console.log('myHealth', myHealth)
             console.log('yourHealth', yourHealth)
+            let body = moveDecision()
 
           let options = createOptions("moves", "POST", body)
           request.post(options, (error, res, body) => {
@@ -95,6 +95,16 @@ let performMove = (gameId) => {
             }
           })
         })
+}
+
+let moveDecision = () => {
+  if (yourHealth <= 15) {
+    return {action:"attack"}
+  } else if (myHealth <= 30) {
+    return {action:"heal"}
+  }else {
+    return {action:"attack"}
+  }
 }
 
 socket.on('connect', (data) => {
@@ -124,7 +134,7 @@ socket.on('start game', (game) => {
         })
         .catch((error) => {
             console.log('Start game error', error)
-        })   
+        })
 })
 
 socket.on('move played', (move) => {
@@ -141,4 +151,3 @@ socket.on('game over', (gameData) => {
         console.log('WE LOST');
     }
 })
-
