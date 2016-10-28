@@ -12,18 +12,18 @@ const apiKey = new Buffer(`${config.apiId}:${config.apiSecret}`).toString('base6
 const socket = io.connect(`http://${config.host}:${config.socketPort}`, { query: socketArguments })
 
 let createOptions = (endpoint, method, body) => {
-  let options = {
-    uri: `http://${config.host}:${config.apiPort}/${endpoint}`,
-    method: method.toUpperCase(),
-    headers: {
-      "Authorization": `Basic ${apiKey}`,
-      "Content-Type": "application/json"
+    let options = {
+        uri: `http://${config.host}:${config.apiPort}/${endpoint}`,
+        method: method.toUpperCase(),
+        headers: {
+            "Authorization": `Basic ${apiKey}`,
+            "Content-Type": "application/json"
+        }
     }
-  }
-  if (body != null) {
-    options.body = JSON.stringify(body)
-  }
-  return options
+    if (body != null) {
+        options.body = JSON.stringify(body)
+    }
+    return options
 }
 
 let getMyHealth = (game) => {
@@ -70,12 +70,12 @@ let getGame = (gameId) => {
     return new Promise((resolve, reject) => {
         let options = createOptions(`games/${gameId}`, "GET")
         request.get(options, (error, res, body) => {
-          if (error || res.statusCode !== 200) {
-            console.error("Error Getting Game", error || res.body)
-            reject(error)
-          } else {
-            resolve(JSON.parse(body))
-          }
+            if (error || res.statusCode !== 200) {
+                console.error("Error Getting Game", error || res.body)
+                reject(error)
+            } else {
+                resolve(JSON.parse(body))
+            }
         })
     })
 }
@@ -88,25 +88,25 @@ let performMove = (gameId) => {
             console.log('myHealth', myHealth)
             console.log('yourHealth', yourHealth)
             let body = moveDecision()
-          let options = createOptions("moves", "POST", body)
-          request.post(options, (error, res, body) => {
-            if (error || res.statusCode !== 200) {
-              console.log("Error Performing Move", error || res.body)
-            } else {
-              console.log(`attack performed successfully`)
-            }
-          })
+            let options = createOptions("moves", "POST", body)
+            request.post(options, (error, res, body) => {
+                if (error || res.statusCode !== 200) {
+                    console.log("Error Performing Move", error || res.body)
+                } else {
+                    console.log(`attack performed successfully`)
+                }
+            })
         })
 }
 
 let moveDecision = () => {
-  if (yourHealth <= 15) {
-    return { action: "attack" }
-  } else if (myHealth <= 27) {
-    return { action: "heal" }
-  } else {
-    return { action: "attack" }
-  }
+    if (yourHealth <= 15) {
+        return { action: "attack" }
+    } else if (myHealth <= 27) {
+        return { action: "heal" }
+    } else {
+        return { action: "attack" }
+    }
 }
 
 socket.on('connect', (data) => {
